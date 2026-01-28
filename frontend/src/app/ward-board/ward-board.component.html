@@ -1,0 +1,1346 @@
+<div class="display-root">
+  <!-- ===== DISPLAY HEADER ===== -->
+    <div class="display-header" *ngIf="data">
+      <div class="display-title">
+        ผังแสดงผู้ป่วยที่กำลังเข้ารักษาตัวตึกผู้ป่วยใน
+
+      </div>
+      
+
+      <div class="display-title">
+        <span>จำนวนผู้ป่วย admit วันนี้: <b>{{ patientSummary.total }}</b> คน</span>
+        <span>ชาย: <b>{{ patientSummary.male }}</b> คน</span>
+        <span>หญิง: <b>{{ patientSummary.female }}</b> คน</span>
+        <span>
+            วันที่: {{ thaiDateTime }}
+        </span>
+        <button class="btn-fullscreen" (click)="toggleFullscreen()">
+          {{ isFullscreen ? '⛶ ออก' : '⛶ เต็มจอ' }}
+        </button>
+        <button class="footer-right"  title="รีเฟรช"(click)="refreshBoard()" [disabled]="isRefreshing"> 🔄 </button>
+        
+      </div>
+          
+        
+        <!-- Loading / Error -->
+      <div *ngIf="!data && !error" class="box">
+        กำลังโหลดข้อมูล...
+      </div>
+
+      <!-- Error -->
+      <div *ngIf="error" class="box error">
+        {{ error }}
+      </div>
+    </div>
+
+    <div class="min-h-screen p-4">
+      <div class=" ">
+        <div class="board-wrapper">
+          <!-- ================= WARD MAP ================= -->
+          <div *ngIf="data" class="ward-map">
+          <!-- ===== ROW TOP ===== -->
+          <section class="zone female" *ngIf="data?.zones?.length && data.zones[0]?.rooms">
+            <div class="zone-title pink">
+              {{ data.zones[0].title }}
+            </div>
+
+            <div class="rooms grid-3">
+              <ng-container *ngFor="let r of data.zones[0].rooms">
+                  <div class="room">
+                    <div
+                      class="bed clickable"
+                      *ngFor="let b of r.beds"
+                      [ngClass]="b.status"
+                      (click)="onBedClick(b)">
+                        <div class="bed-head">
+                        <span class="bed-code">เตียง {{ b.bedno || r.room }}</span>
+
+                      <div class="bed-head-right">
+                            <!-- ===== MALE ===== -->
+                            <img
+                              *ngIf="b.sexType === 'male' && b.ageType === 'child'"
+                              src="assets/images/child-male.png"
+                              class="head-icon"
+                              alt="เด็กชาย"
+                            />
+
+                            <img
+                              *ngIf="b.sexType === 'male' && b.ageType === 'adult'"
+                              src="assets/images/adult-male.png"
+                              class="head-icon"
+                              alt="ผู้ชาย"
+                            />
+
+                            <img
+                              *ngIf="b.sexType === 'male' && b.ageType === 'elder'"
+                              src="assets/images/elder-male.png"
+                              class="head-icon"
+                              alt="ผู้สูงอายุชาย"
+                            />
+
+                            <!-- ===== FEMALE ===== -->
+                            <img
+                              *ngIf="b.sexType === 'female' && b.ageType === 'child'"
+                              src="assets/images/child-female.png"
+                              class="head-icon"
+                              alt="เด็กหญิง"
+                            />
+
+                            <img
+                              *ngIf="b.sexType === 'female' && b.ageType === 'adult'"
+                              src="assets/images/adult-female.png"
+                              class="head-icon"
+                              alt="ผู้หญิง"
+                            />
+
+                            <img
+                              *ngIf="b.sexType === 'female' && b.ageType === 'elder'"
+                              src="assets/images/elder-female.png"
+                              class="head-icon"
+                              alt="ผู้สูงอายุหญิง"
+                            />
+
+                             <ng-container *ngIf="getLabStatus(b) as lab">
+                        <div class="lab-stack">
+                          <img src="assets/images/lab.png" class="status-icon" />
+
+                          <img *ngIf="lab === 'W'" src="assets/images/status-report.png" class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'C'" src="assets/images/status-wait.png"   class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'N'" src="assets/images/status-none.png"   class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'Y' || lab === 'OTHER'"
+                              src="assets/images/status-ok.png"
+                              class="status-icon lab-overlay" />
+                        </div>
+                      </ng-container>
+
+                            <!-- ===== XRAY ===== -->
+                          <ng-container *ngIf="getXrayStatus(b) as xr">
+                            <div class="lab-stack">
+                              <img src="assets/images/xray.png" class="status-icon" />
+
+                              <img *ngIf="xr === 'W'" src="assets/images/status-report.png" class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'C'" src="assets/images/status-wait.png"   class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'N'" src="assets/images/status-none.png"   class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'Y' || xr === 'OTHER'"
+                                  src="assets/images/status-ok.png"
+                                  class="status-icon lab-overlay" />
+                            </div>
+                          </ng-container>
+                      </div>
+                           
+                      </div>
+                      <!-- ===== ข้อมูลผู้ป่วย ===== -->
+                      <div class="bed-patient" *ngIf="b.patient">
+                        <div class="bed-name">
+                          {{ b.patient.patient_name }}
+                        </div>
+
+                        <div class="bed-meta">
+                           HN {{ b.patient.hn }} 
+                        </div>
+
+                        <div class="bed-meta small">
+                        อายุ: {{ b.patient.age_y }} ปี
+                      {{ b.patient.age_m }} เดือน
+                      {{ b.patient.age_d }} วัน 
+                        </div>
+                      </div>
+                    </div>
+                </div>
+              </ng-container>
+            </div>
+          </section>
+          <!-- ===== กลางจุดพยาบาล / ศูนย์กลาง===== -->
+          <section class="zone center">  
+          <div class="nurse"><img src="assets/images/nurse.png" class="nurse-image" />
+            <div class="nurse-title">NURSE STATION</div>
+            <div class="nurse-sub">จุดพยาบาล / ศูนย์กลาง</div>
+          </div>
+          </section>
+          <!-- ===== โซน ผู้ชาย===== -->
+          <!-- ===== โซน ผู้ชาย ===== -->
+          <section class="zone male">
+            <div class="zone-title blue">{{ findZone('male')?.title }}</div>
+
+            <div class="rooms grid-3">
+              <ng-container *ngFor="let r of findZone('male')?.rooms">
+                <div class="room">
+
+                  <div
+                    class="bed clickable"
+                    *ngFor="let b of r.beds"
+                    [ngClass]="b.status"
+                    (click)="onBedClick(b)"
+                  >
+
+                    <!-- ===== HEAD BED ===== -->
+                    <div class="bed-head">
+                      <span class="bed-code">เตียง {{ b.bedno || r.room }}</span>
+
+                      <div class="bed-head-right">
+                          <!-- ===== MALE ===== -->
+                          <img
+                            *ngIf="b.sexType === 'male' && b.ageType === 'child'"
+                            src="assets/images/child-male.png"
+                            class="head-icon"
+                            alt="เด็กชาย"
+                          />
+
+                          <img
+                            *ngIf="b.sexType === 'male' && b.ageType === 'adult'"
+                            src="assets/images/adult-male.png"
+                            class="head-icon"
+                            alt="ผู้ชาย"
+                          />
+
+                          <img
+                            *ngIf="b.sexType === 'male' && b.ageType === 'elder'"
+                            src="assets/images/elder-male.png"
+                            class="head-icon"
+                            alt="ผู้สูงอายุชาย"
+                          />
+
+                          <!-- ===== FEMALE ===== -->
+                          <img
+                            *ngIf="b.sexType === 'female' && b.ageType === 'child'"
+                            src="assets/images/child-female.png"
+                            class="head-icon"
+                            alt="เด็กหญิง"
+                          />
+
+                          <img
+                            *ngIf="b.sexType === 'female' && b.ageType === 'adult'"
+                            src="assets/images/adult-female.png"
+                            class="head-icon"
+                            alt="ผู้หญิง"
+                          />
+
+                          <img
+                            *ngIf="b.sexType === 'female' && b.ageType === 'elder'"
+                            src="assets/images/elder-female.png"
+                            class="head-icon"
+                            alt="ผู้สูงอายุหญิง"
+                          />
+                           <ng-container *ngIf="getLabStatus(b) as lab">
+                        <div class="lab-stack">
+                          <img src="assets/images/lab.png" class="status-icon" />
+
+                          <img *ngIf="lab === 'W'" src="assets/images/status-report.png" class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'C'" src="assets/images/status-wait.png"   class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'N'" src="assets/images/status-none.png"   class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'Y' || lab === 'OTHER'"
+                              src="assets/images/status-ok.png"
+                              class="status-icon lab-overlay" />
+                        </div>
+                      </ng-container>
+
+                            <!-- ===== XRAY ===== -->
+                          <ng-container *ngIf="getXrayStatus(b) as xr">
+                            <div class="lab-stack">
+                              <img src="assets/images/xray.png" class="status-icon" />
+
+                              <img *ngIf="xr === 'W'" src="assets/images/status-report.png" class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'C'" src="assets/images/status-wait.png"   class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'N'" src="assets/images/status-none.png"   class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'Y' || xr === 'OTHER'"
+                                  src="assets/images/status-ok.png"
+                                  class="status-icon lab-overlay" />
+                            </div>
+                          </ng-container>
+                        </div>
+                    </div>
+                    <!-- ===== END HEAD BED ===== -->
+
+                    <!-- ===== BODY ===== -->
+                    <div class="bed-patient" *ngIf="b.patient">
+                      <div class="bed-name">
+                          {{ b.patient.patient_name }}
+                        </div>
+
+                        <div class="bed-meta">
+                           HN {{ b.patient.hn }} 
+                        </div>
+
+                        <div class="bed-meta small">
+                      อายุ: {{ b.patient.age_y }} ปี
+                      {{ b.patient.age_m }} เดือน
+                      {{ b.patient.age_d }} วัน 
+                        </div>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+            </div>
+          </section>
+
+
+          <!-- ===== โซนห้องพิเศษ1 ===== -->
+          <section class="zone special special1">
+            <div class="zone-title green">{{ findZone('special')?.title }}</div>
+
+            <div class="rooms grid-2">
+              <ng-container *ngFor="let r of findZone('special')?.rooms">
+                <div class="room">
+
+                  <div
+                    class="bed clickable"
+                    *ngFor="let b of r.beds"
+                    [ngClass]="b.status"
+                    (click)="onBedClick(b)"
+                  >
+
+                    <!-- ===== HEAD BED ===== -->
+                    <div class="bed-head">
+                      <span class="bed-code">เตียง {{ b.bedno || r.room }}</span>
+
+                      <div class="bed-head-right">
+                        <!-- ===== MALE ===== -->
+                        <img
+                          *ngIf="b.sexType === 'male' && b.ageType === 'child'"
+                          src="assets/images/child-male.png"
+                          class="head-icon"
+                          alt="เด็กชาย"
+                        />
+
+                        <img
+                          *ngIf="b.sexType === 'male' && b.ageType === 'adult'"
+                          src="assets/images/adult-male.png"
+                          class="head-icon"
+                          alt="ผู้ชาย"
+                        />
+
+                        <img
+                          *ngIf="b.sexType === 'male' && b.ageType === 'elder'"
+                          src="assets/images/elder-male.png"
+                          class="head-icon"
+                          alt="ผู้สูงอายุชาย"
+                        />
+
+                        <!-- ===== FEMALE ===== -->
+                        <img
+                          *ngIf="b.sexType === 'female' && b.ageType === 'child'"
+                          src="assets/images/child-female.png"
+                          class="head-icon"
+                          alt="เด็กหญิง"
+                        />
+
+                        <img
+                          *ngIf="b.sexType === 'female' && b.ageType === 'adult'"
+                          src="assets/images/adult-female.png"
+                          class="head-icon"
+                          alt="ผู้หญิง"
+                        />
+
+                        <img
+                          *ngIf="b.sexType === 'female' && b.ageType === 'elder'"
+                          src="assets/images/elder-female.png"
+                          class="head-icon"
+                          alt="ผู้สูงอายุหญิง"
+                        />
+                         <ng-container *ngIf="getLabStatus(b) as lab">
+                        <div class="lab-stack">
+                          <img src="assets/images/lab.png" class="status-icon" />
+
+                          <img *ngIf="lab === 'W'" src="assets/images/status-report.png" class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'C'" src="assets/images/status-wait.png"   class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'N'" src="assets/images/status-none.png"   class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'Y' || lab === 'OTHER'"
+                              src="assets/images/status-ok.png"
+                              class="status-icon lab-overlay" />
+                        </div>
+                      </ng-container>
+
+                            <!-- ===== XRAY ===== -->
+                          <ng-container *ngIf="getXrayStatus(b) as xr">
+                            <div class="lab-stack">
+                              <img src="assets/images/xray.png" class="status-icon" />
+
+                              <img *ngIf="xr === 'W'" src="assets/images/status-report.png" class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'C'" src="assets/images/status-wait.png"   class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'N'" src="assets/images/status-none.png"   class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'Y' || xr === 'OTHER'"
+                                  src="assets/images/status-ok.png"
+                                  class="status-icon lab-overlay" />
+                            </div>
+                          </ng-container>
+                      </div>
+
+                    </div>
+                    <!-- ===== END HEAD BED ===== -->
+
+                    <!-- ===== BODY ===== -->
+                    <div class="bed-patient" *ngIf="b.patient">
+                      <div class="bed-name">
+                          {{ b.patient.patient_name }}
+                        </div>
+
+                        <div class="bed-meta">
+                           HN {{ b.patient.hn }} 
+                        </div>
+
+                        <div class="bed-meta small">
+                      อายุ: {{ b.patient.age_y }} ปี
+                      {{ b.patient.age_m }} เดือน
+                      {{ b.patient.age_d }} วัน 
+                        </div>
+                    </div>
+
+                  </div>
+
+                </div>
+              </ng-container>
+            </div>
+          </section>
+
+          <!-- ===== ROWspecial p03/04  ===== -->
+          <section class="zone special special3">
+            <div class="zone-title green">
+              {{ findZone('special1')?.title }}
+            </div>
+
+            <div class="rooms grid-2">
+              <ng-container *ngFor="let r of findZone('special1')?.rooms">
+                <div class="room">
+
+                  <div
+                    class="bed clickable"
+                    *ngFor="let b of r.beds"
+                    [ngClass]="b.status"
+                    (click)="onBedClick(b)"
+                  >
+
+                    <!-- ===== HEAD BED ===== -->
+                    <div class="bed-head">
+                      <span class="bed-code">เตียง {{ b.bedno || r.room }}</span>
+
+                      <div class="bed-head-right">
+                          <!-- ===== MALE ===== -->
+                          <img
+                            *ngIf="b.sexType === 'male' && b.ageType === 'child'"
+                            src="assets/images/child-male.png"
+                            class="head-icon"
+                            alt="เด็กชาย"
+                          />
+
+                          <img
+                            *ngIf="b.sexType === 'male' && b.ageType === 'adult'"
+                            src="assets/images/adult-male.png"
+                            class="head-icon"
+                            alt="ผู้ชาย"
+                          />
+
+                          <img
+                            *ngIf="b.sexType === 'male' && b.ageType === 'elder'"
+                            src="assets/images/elder-male.png"
+                            class="head-icon"
+                            alt="ผู้สูงอายุชาย"
+                          />
+
+                          <!-- ===== FEMALE ===== -->
+                          <img
+                            *ngIf="b.sexType === 'female' && b.ageType === 'child'"
+                            src="assets/images/child-female.png"
+                            class="head-icon"
+                            alt="เด็กหญิง"
+                          />
+
+                          <img
+                            *ngIf="b.sexType === 'female' && b.ageType === 'adult'"
+                            src="assets/images/adult-female.png"
+                            class="head-icon"
+                            alt="ผู้หญิง"
+                          />
+
+                          <img
+                            *ngIf="b.sexType === 'female' && b.ageType === 'elder'"
+                            src="assets/images/elder-female.png"
+                            class="head-icon"
+                            alt="ผู้สูงอายุหญิง"
+                          />
+                           <ng-container *ngIf="getLabStatus(b) as lab">
+                        <div class="lab-stack">
+                          <img src="assets/images/lab.png" class="status-icon" />
+
+                          <img *ngIf="lab === 'W'" src="assets/images/status-report.png" class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'C'" src="assets/images/status-wait.png"   class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'N'" src="assets/images/status-none.png"   class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'Y' || lab === 'OTHER'"
+                              src="assets/images/status-ok.png"
+                              class="status-icon lab-overlay" />
+                        </div>
+                      </ng-container>
+
+                            <!-- ===== XRAY ===== -->
+                          <ng-container *ngIf="getXrayStatus(b) as xr">
+                            <div class="lab-stack">
+                              <img src="assets/images/xray.png" class="status-icon" />
+
+                              <img *ngIf="xr === 'W'" src="assets/images/status-report.png" class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'C'" src="assets/images/status-wait.png"   class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'N'" src="assets/images/status-none.png"   class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'Y' || xr === 'OTHER'"
+                                  src="assets/images/status-ok.png"
+                                  class="status-icon lab-overlay" />
+                            </div>
+                          </ng-container>
+                        </div>
+
+                    </div>
+                    <!-- ===== END HEAD BED ===== -->
+
+                    <!-- ===== BODY ===== -->
+                    <div class="bed-patient" *ngIf="b.patient">
+                      <div class="bed-name">
+                          {{ b.patient.patient_name }}
+                        </div>
+
+                        <div class="bed-meta">
+                           HN {{ b.patient.hn }}
+                        </div>
+
+                        <div class="bed-meta small">
+                       อายุ: {{ b.patient.age_y }} ปี
+                      {{ b.patient.age_m }} เดือน
+                      {{ b.patient.age_d }} วัน 
+                        </div>
+                    </div>
+
+                  </div>
+
+                </div>
+              </ng-container>
+            </div>
+          </section>
+
+            <!-- ===== ROWspecial2  ===== -->
+          <section class="zone rehab">
+            <div class="zone-title purple">{{ findZone('rehab')?.title }}</div>
+
+            <div class="rooms grid-2">
+              <ng-container *ngFor="let r of findZone('rehab')?.rooms">
+                <div class="room">
+
+                  <div
+                    class="bed clickable"
+                    *ngFor="let b of r.beds"
+                    [ngClass]="b.status"
+                    (click)="onBedClick(b)"
+                  >
+
+                    <!-- ===== HEAD BED ===== -->
+                    <div class="bed-head">
+                      <span class="bed-code">เตียง {{ b.bedno || r.room }}</span>
+
+                      <div class="bed-head-right">
+                        <!-- ===== MALE ===== -->
+                        <img
+                          *ngIf="b.sexType === 'male' && b.ageType === 'child'"
+                          src="assets/images/child-male.png"
+                          class="head-icon"
+                          alt="เด็กชาย"
+                        />
+
+                        <img
+                          *ngIf="b.sexType === 'male' && b.ageType === 'adult'"
+                          src="assets/images/adult-male.png"
+                          class="head-icon"
+                          alt="ผู้ชาย"
+                        />
+
+                        <img
+                          *ngIf="b.sexType === 'male' && b.ageType === 'elder'"
+                          src="assets/images/elder-male.png"
+                          class="head-icon"
+                          alt="ผู้สูงอายุชาย"
+                        />
+
+                        <!-- ===== FEMALE ===== -->
+                        <img
+                          *ngIf="b.sexType === 'female' && b.ageType === 'child'"
+                          src="assets/images/child-female.png"
+                          class="head-icon"
+                          alt="เด็กหญิง"
+                        />
+
+                        <img
+                          *ngIf="b.sexType === 'female' && b.ageType === 'adult'"
+                          src="assets/images/adult-female.png"
+                          class="head-icon"
+                          alt="ผู้หญิง"
+                        />
+
+                        <img
+                          *ngIf="b.sexType === 'female' && b.ageType === 'elder'"
+                          src="assets/images/elder-female.png"
+                          class="head-icon"
+                          alt="ผู้สูงอายุหญิง"
+                        />
+                         <ng-container *ngIf="getLabStatus(b) as lab">
+                        <div class="lab-stack">
+                          <img src="assets/images/lab.png" class="status-icon" />
+
+                          <img *ngIf="lab === 'W'" src="assets/images/status-report.png" class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'C'" src="assets/images/status-wait.png"   class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'N'" src="assets/images/status-none.png"   class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'Y' || lab === 'OTHER'"
+                              src="assets/images/status-ok.png"
+                              class="status-icon lab-overlay" />
+                        </div>
+                      </ng-container>
+
+                            <!-- ===== XRAY ===== -->
+                          <ng-container *ngIf="getXrayStatus(b) as xr">
+                            <div class="lab-stack">
+                              <img src="assets/images/xray.png" class="status-icon" />
+
+                              <img *ngIf="xr === 'W'" src="assets/images/status-report.png" class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'C'" src="assets/images/status-wait.png"   class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'N'" src="assets/images/status-none.png"   class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'Y' || xr === 'OTHER'"
+                                  src="assets/images/status-ok.png"
+                                  class="status-icon lab-overlay" />
+                            </div>
+                          </ng-container>
+                      </div>
+
+                    </div>
+                    <!-- ===== END HEAD BED ===== -->
+
+                    <!-- ===== BODY ===== -->
+                    <div class="bed-patient" *ngIf="b.patient">
+                      <div class="bed-name">
+                          {{ b.patient.patient_name }}
+                        </div>
+
+                        <div class="bed-meta">
+                           HN {{ b.patient.hn }} 
+                        </div>
+
+                        <div class="bed-meta small">
+                       อายุ: {{ b.patient.age_y }} ปี
+                      {{ b.patient.age_m }} เดือน
+                      {{ b.patient.age_d }} วัน 
+                        </div>
+                    </div>
+
+                  </div>
+
+                </div>
+              </ng-container>
+            </div>
+          </section>
+
+            <!-- ===== ROWspecial p05  ===== -->
+        <section class="zone special p05">
+          <div class="zone-title green">
+            {{ findZone('special2')?.title }}
+          </div>
+
+          <div class="rooms grid-1">
+            <ng-container *ngFor="let r of findZone('special2')?.rooms">
+              <div class="room">
+
+                <div
+                  class="bed clickable"
+                  *ngFor="let b of r.beds"
+                  [ngClass]="b.status"
+                  (click)="onBedClick(b)"
+                >
+
+                  <!-- ===== HEAD BED ===== -->
+                  <div class="bed-head">
+                    <span class="bed-code">เตียง {{ b.bedno || r.room }}</span>
+
+                    <div class="bed-head-right">
+                        <!-- ===== MALE ===== -->
+                        <img
+                          *ngIf="b.sexType === 'male' && b.ageType === 'child'"
+                          src="assets/images/child-male.png"
+                          class="head-icon"
+                          alt="เด็กชาย"
+                        />
+
+                        <img
+                          *ngIf="b.sexType === 'male' && b.ageType === 'adult'"
+                          src="assets/images/adult-male.png"
+                          class="head-icon"
+                          alt="ผู้ชาย"
+                        />
+
+                        <img
+                          *ngIf="b.sexType === 'male' && b.ageType === 'elder'"
+                          src="assets/images/elder-male.png"
+                          class="head-icon"
+                          alt="ผู้สูงอายุชาย"
+                        />
+
+                        <!-- ===== FEMALE ===== -->
+                        <img
+                          *ngIf="b.sexType === 'female' && b.ageType === 'child'"
+                          src="assets/images/child-female.png"
+                          class="head-icon"
+                          alt="เด็กหญิง"
+                        />
+
+                        <img
+                          *ngIf="b.sexType === 'female' && b.ageType === 'adult'"
+                          src="assets/images/adult-female.png"
+                          class="head-icon"
+                          alt="ผู้หญิง"
+                        />
+
+                        <img
+                          *ngIf="b.sexType === 'female' && b.ageType === 'elder'"
+                          src="assets/images/elder-female.png"
+                          class="head-icon"
+                          alt="ผู้สูงอายุหญิง"
+                        />
+                         <ng-container *ngIf="getLabStatus(b) as lab">
+                        <div class="lab-stack">
+                          <img src="assets/images/lab.png" class="status-icon" />
+
+                          <img *ngIf="lab === 'W'" src="assets/images/status-report.png" class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'C'" src="assets/images/status-wait.png"   class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'N'" src="assets/images/status-none.png"   class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'Y' || lab === 'OTHER'"
+                              src="assets/images/status-ok.png"
+                              class="status-icon lab-overlay" />
+                        </div>
+                      </ng-container>
+
+                            <!-- ===== XRAY ===== -->
+                          <ng-container *ngIf="getXrayStatus(b) as xr">
+                            <div class="lab-stack">
+                              <img src="assets/images/xray.png" class="status-icon" />
+
+                              <img *ngIf="xr === 'W'" src="assets/images/status-report.png" class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'C'" src="assets/images/status-wait.png"   class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'N'" src="assets/images/status-none.png"   class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'Y' || xr === 'OTHER'"
+                                  src="assets/images/status-ok.png"
+                                  class="status-icon lab-overlay" />
+                            </div>
+                          </ng-container>
+                      </div>
+
+                  </div>
+                  <!-- ===== END HEAD BED ===== -->
+
+                  <!-- ===== BODY ===== -->
+                  <div class="bed-patient" *ngIf="b.patient">
+                    <div class="bed-name">
+                          {{ b.patient.patient_name }}
+                        </div>
+
+                        <div class="bed-meta">
+                           HN {{ b.patient.hn }} 
+                        </div>
+
+                        <div class="bed-meta small">
+                       อายุ: {{ b.patient.age_y }} ปี
+                      {{ b.patient.age_m }} เดือน
+                      {{ b.patient.age_d }} วัน 
+                        </div>
+                  </div>
+
+                </div>
+
+              </div>
+            </ng-container>
+          </div>
+        </section>
+
+          <!-- ===== isolation1  ===== -->
+          <section class="zone isolation isolation1">
+            <div class="zone-title orange">{{ findZone('isolation')?.title }}</div>
+
+            <div class="rooms grid-1">
+              <ng-container *ngFor="let r of findZone('isolation')?.rooms">
+                <div class="room">
+
+                  <div
+                    class="bed clickable"
+                    *ngFor="let b of r.beds"
+                    [ngClass]="b.status"
+                    (click)="onBedClick(b)"
+                  >
+
+                    <!-- ===== HEAD BED ===== -->
+                    <div class="bed-head">
+                      <span class="bed-code">เตียง {{ b.bedno || r.room }}</span>
+
+                      <div class="bed-head-right">
+                        <!-- ===== MALE ===== -->
+                        <img
+                          *ngIf="b.sexType === 'male' && b.ageType === 'child'"
+                          src="assets/images/child-male.png"
+                          class="head-icon"
+                          alt="เด็กชาย"
+                        />
+
+                        <img
+                          *ngIf="b.sexType === 'male' && b.ageType === 'adult'"
+                          src="assets/images/adult-male.png"
+                          class="head-icon"
+                          alt="ผู้ชาย"
+                        />
+
+                        <img
+                          *ngIf="b.sexType === 'male' && b.ageType === 'elder'"
+                          src="assets/images/elder-male.png"
+                          class="head-icon"
+                          alt="ผู้สูงอายุชาย"
+                        />
+
+                        <!-- ===== FEMALE ===== -->
+                        <img
+                          *ngIf="b.sexType === 'female' && b.ageType === 'child'"
+                          src="assets/images/child-female.png"
+                          class="head-icon"
+                          alt="เด็กหญิง"
+                        />
+
+                        <img
+                          *ngIf="b.sexType === 'female' && b.ageType === 'adult'"
+                          src="assets/images/adult-female.png"
+                          class="head-icon"
+                          alt="ผู้หญิง"
+                        />
+
+                        <img
+                          *ngIf="b.sexType === 'female' && b.ageType === 'elder'"
+                          src="assets/images/elder-female.png"
+                          class="head-icon"
+                          alt="ผู้สูงอายุหญิง"
+                        />
+                           <ng-container *ngIf="getLabStatus(b) as lab">
+                        <div class="lab-stack">
+                          <img src="assets/images/lab.png" class="status-icon" />
+
+                          <img *ngIf="lab === 'W'" src="assets/images/status-report.png" class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'C'" src="assets/images/status-wait.png"   class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'N'" src="assets/images/status-none.png"   class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'Y' || lab === 'OTHER'"
+                              src="assets/images/status-ok.png"
+                              class="status-icon lab-overlay" />
+                        </div>
+                      </ng-container>
+
+                            <!-- ===== XRAY ===== -->
+                          <ng-container *ngIf="getXrayStatus(b) as xr">
+                            <div class="lab-stack">
+                              <img src="assets/images/xray.png" class="status-icon" />
+
+                              <img *ngIf="xr === 'W'" src="assets/images/status-report.png" class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'C'" src="assets/images/status-wait.png"   class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'N'" src="assets/images/status-none.png"   class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'Y' || xr === 'OTHER'"
+                                  src="assets/images/status-ok.png"
+                                  class="status-icon lab-overlay" />
+                            </div>
+                          </ng-container>
+                      </div>
+
+                    </div>
+                    <!-- ===== END HEAD BED ===== -->
+
+                    <!-- ===== BODY ===== -->
+                    <div class="bed-patient" *ngIf="b.patient">
+                      <div class="bed-name">
+                          {{ b.patient.patient_name }}
+                        </div>
+
+                        <div class="bed-meta">
+                           HN {{ b.patient.hn }} 
+                        </div>
+
+                        <div class="bed-meta small">
+                      อายุ: {{ b.patient.age_y }} ปี
+                      {{ b.patient.age_m }} เดือน
+                      {{ b.patient.age_d }} วัน 
+                        </div>
+                    </div>
+
+                  </div>
+
+                </div>
+              </ng-container>
+            </div>
+          </section>
+
+          <!-- ===== ROWspecial2  ===== -->
+          <section class="zone isolation isolation2">
+            <div class="zone-title orange">{{ findZone('isolation2')?.title }}</div>
+
+            <div class="rooms grid-1">
+              <ng-container *ngFor="let r of findZone('isolation2')?.rooms">
+                <div class="room">
+
+                  <div
+                    class="bed clickable"
+                    *ngFor="let b of r.beds"
+                    [ngClass]="b.status"
+                    (click)="onBedClick(b)"
+                  >
+
+                    <!-- ===== HEAD BED ===== -->
+                    <div class="bed-head">
+                      <span class="bed-code">เตียง {{ b.bedno || r.room }}</span>
+
+                      <div class="bed-head-right">
+                            <!-- ===== MALE ===== -->
+                            <img
+                              *ngIf="b.sexType === 'male' && b.ageType === 'child'"
+                              src="assets/images/child-male.png"
+                              class="head-icon"
+                              alt="เด็กชาย"
+                            />
+
+                            <img
+                              *ngIf="b.sexType === 'male' && b.ageType === 'adult'"
+                              src="assets/images/adult-male.png"
+                              class="head-icon"
+                              alt="ผู้ชาย"
+                            />
+
+                            <img
+                              *ngIf="b.sexType === 'male' && b.ageType === 'elder'"
+                              src="assets/images/elder-male.png"
+                              class="head-icon"
+                              alt="ผู้สูงอายุชาย"
+                            />
+
+                            <!-- ===== FEMALE ===== -->
+                            <img
+                              *ngIf="b.sexType === 'female' && b.ageType === 'child'"
+                              src="assets/images/child-female.png"
+                              class="head-icon"
+                              alt="เด็กหญิง"
+                            />
+
+                            <img
+                              *ngIf="b.sexType === 'female' && b.ageType === 'adult'"
+                              src="assets/images/adult-female.png"
+                              class="head-icon"
+                              alt="ผู้หญิง"
+                            />
+
+                            <img
+                              *ngIf="b.sexType === 'female' && b.ageType === 'elder'"
+                              src="assets/images/elder-female.png"
+                              class="head-icon"
+                              alt="ผู้สูงอายุหญิง"
+                            />
+                            <ng-container *ngIf="getLabStatus(b) as lab">
+                        <div class="lab-stack">
+                          <img src="assets/images/lab.png" class="status-icon" />
+
+                          <img *ngIf="lab === 'W'" src="assets/images/status-report.png" class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'C'" src="assets/images/status-wait.png"   class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'N'" src="assets/images/status-none.png"   class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'Y' || lab === 'OTHER'"
+                              src="assets/images/status-ok.png"
+                              class="status-icon lab-overlay" />
+                        </div>
+                      </ng-container>
+
+                            <!-- ===== XRAY ===== -->
+                          <ng-container *ngIf="getXrayStatus(b) as xr">
+                            <div class="lab-stack">
+                              <img src="assets/images/xray.png" class="status-icon" />
+
+                              <img *ngIf="xr === 'W'" src="assets/images/status-report.png" class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'C'" src="assets/images/status-wait.png"   class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'N'" src="assets/images/status-none.png"   class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'Y' || xr === 'OTHER'"
+                                  src="assets/images/status-ok.png"
+                                  class="status-icon lab-overlay" />
+                            </div>
+                          </ng-container>
+
+                          </div>
+
+                    </div>
+                    <!-- ===== END HEAD BED ===== -->
+
+                    <!-- ===== BODY ===== -->
+                    <div class="bed-patient" *ngIf="b.patient">
+                      <div class="bed-name">
+                          {{ b.patient.patient_name }}
+                        </div>
+
+                        <div class="bed-meta">
+                           HN {{ b.patient.hn }} 
+                        </div>
+
+                        <div class="bed-meta small">
+                       อายุ: {{ b.patient.age_y }} ปี
+                      {{ b.patient.age_m }} เดือน
+                      {{ b.patient.age_d }} วัน 
+                        </div>
+                      </div>
+
+                  </div>
+
+                </div>
+              </ng-container>
+            </div>
+          </section>
+
+
+          <!-- ===== EXTRA BED ZONE (เตียงเสริม) ===== -->
+         <section class="zone zone--extra">
+          <div class="zone-title">เตียงเสริม</div>
+
+          <div class="rooms grid-2">
+            <ng-container *ngFor="let r of findZone('extra')?.rooms">
+              <div class="room">
+
+                <div
+                  class="bed clickable"
+                  *ngFor="let b of r.beds"
+                  [ngClass]="b.status"
+                  (click)="onBedClick(b)"
+                >
+
+                  <!-- ===== HEAD BED ===== -->
+                  <div class="bed-head">
+                    <span class="bed-code">เตียง {{ b.bedno || r.room }}</span>
+
+                    <div class="bed-head-right">
+                      <!-- ===== MALE ===== -->
+                      <img
+                        *ngIf="b.sexType === 'male' && b.ageType === 'child'"
+                        src="assets/images/child-male.png"
+                        class="head-icon"
+                        alt="เด็กชาย"
+                      />
+
+                      <img
+                        *ngIf="b.sexType === 'male' && b.ageType === 'adult'"
+                        src="assets/images/adult-male.png"
+                        class="head-icon"
+                        alt="ผู้ชาย"
+                      />
+
+                      <img
+                        *ngIf="b.sexType === 'male' && b.ageType === 'elder'"
+                        src="assets/images/elder-male.png"
+                        class="head-icon"
+                        alt="ผู้สูงอายุชาย"
+                      />
+
+                      <!-- ===== FEMALE ===== -->
+                      <img
+                        *ngIf="b.sexType === 'female' && b.ageType === 'child'"
+                        src="assets/images/child-female.png"
+                        class="head-icon"
+                        alt="เด็กหญิง"
+                      />
+
+                      <img
+                        *ngIf="b.sexType === 'female' && b.ageType === 'adult'"
+                        src="assets/images/adult-female.png"
+                        class="head-icon"
+                        alt="ผู้หญิง"
+                      />
+
+                      <img
+                        *ngIf="b.sexType === 'female' && b.ageType === 'elder'"
+                        src="assets/images/elder-female.png"
+                        class="head-icon"
+                        alt="ผู้สูงอายุหญิง"
+                      />
+                      <ng-container *ngIf="getLabStatus(b) as lab">
+                        <div class="lab-stack">
+                          <img src="assets/images/lab.png" class="status-icon" />
+
+                          <img *ngIf="lab === 'W'" src="assets/images/status-report.png" class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'C'" src="assets/images/status-wait.png"   class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'N'" src="assets/images/status-none.png"   class="status-icon lab-overlay" />
+                          <img *ngIf="lab === 'Y' || lab === 'OTHER'"
+                              src="assets/images/status-ok.png"
+                              class="status-icon lab-overlay" />
+                        </div>
+                      </ng-container>
+
+                            <!-- ===== XRAY ===== -->
+                          <ng-container *ngIf="getXrayStatus(b) as xr">
+                            <div class="lab-stack">
+                              <img src="assets/images/xray.png" class="status-icon" />
+
+                              <img *ngIf="xr === 'W'" src="assets/images/status-report.png" class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'C'" src="assets/images/status-wait.png"   class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'N'" src="assets/images/status-none.png"   class="status-icon lab-overlay" />
+                              <img *ngIf="xr === 'Y' || xr === 'OTHER'"
+                                  src="assets/images/status-ok.png"
+                                  class="status-icon lab-overlay" />
+                            </div>
+                          </ng-container>
+
+                    </div>
+
+                  </div>
+                  <!-- ===== END HEAD BED ===== -->
+
+                 <div class="bed-patient" *ngIf="b.patient">
+                  <div class="bed-name">
+                          {{ b.patient.patient_name }}
+                        </div>
+
+                        <div class="bed-meta">
+                           HN {{ b.patient.hn }} 
+                        </div>
+
+                        <div class="bed-meta small">
+                      อายุ: {{ b.patient.age_y }} ปี
+                      {{ b.patient.age_m }} เดือน
+                      {{ b.patient.age_d }} วัน 
+                        </div>
+                </div>
+                 
+
+                </div>
+
+              </div>
+            </ng-container>
+          </div>
+        </section>
+       <!-- ⭐  NOTE BOX (กล่องลากอิสระ) -->
+        <div
+          class="note-toggle-star"
+          title="เปิด"
+          *ngIf="isCollapsed"
+          (click)="toggleNote()"
+        >
+          ⭐
+        </div>
+
+          <!-- ⭐ FLOATING NOTE BOX (กล่องลากอิสระ) -->
+
+          <div
+            class="floating-note"
+            *ngIf="!isCollapsed"
+            cdkDrag
+            cdkDragBoundary="body"
+            [cdkDragFreeDragPosition]="notePosition"
+            (cdkDragEnded)="onNoteDragEnd($event)"
+          >
+            <button class="note-star"  title="รายละเอียด"(click)="openLegend()">📌</button>
+            <!-- 🔸 HEADER -->
+            <div class="note-header" cdkDragHandle>
+              <span>📝 บันทึก</span>
+
+              <!-- ⭐ ปุ่มพับ -->
+              <button class="star-btn"   title="ปิด" (click)="toggleNote()">
+                ⭐
+              </button>
+            </div>
+
+            <!-- BODY -->
+            <div class="note-body">
+              <textarea
+                [(ngModel)]="noteText"
+                (input)="saveNote()"
+                placeholder="เขียนข้อความได้..."
+              ></textarea>
+            </div>
+          </div>
+
+
+  
+          <!-- ===== WAITING BED FOOTER ===== -->
+          <div class="waiting-footer" *ngIf="waitingList.length > 0">
+              <div class="waiting-title">
+              ⏳ ผู้ป่วยที่ไม่ได้ระบุเตียง ({{ waitingList.length }} คน)
+              </div>
+
+              <div class="waiting-list">
+                <div
+                  class="waiting-card clickable"
+                  *ngFor="let p of waitingList"
+                  (click)="openWaitingDetail(p)"
+                >
+                  <div class="hn">{{ p.hn }}</div>
+                  <div class="name">{{ p.patient_name }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="waiting-footer empty" *ngIf="waitingList.length === 0">
+              🛏️ ไม่มีผู้ป่วยที่ไม่ระบุเตียง
+            </div>
+        </div>
+       </div>
+      </div>
+    
+    
+
+      <!-- ================= POPUP DETAIL ================= -->
+      <div class="modal-backdrop" *ngIf="showModal">
+        <div class="modal">
+
+          <!-- HEADER -->
+          <div class="modal-header">
+            <h3>รายละเอียดผู้ป่วย</h3>
+            <button class="close-btn" (click)="closeModal()">✕</button>
+          </div>
+
+          <!-- BODY -->
+          <div class="modal-body" *ngIf="selectedPatient">
+            <div class="bed-info" *ngIf="selectedBed">
+              <span class="label">เตียง:</span>
+              <span class="value">
+                {{ selectedBed.bedno }}
+                <span *ngIf="selectedBed.room"> (ห้อง: {{ selectedBed.room }})</span>
+                <span *ngIf="selectedBed.zone"> - {{ selectedBed.zone }}</span>
+              </span>
+            </div>
+            <div class="info-row">
+              <span class="label">AN</span>
+              <span class="value">{{ selectedPatient.an }}</span>
+            </div>
+
+            <div class="info-row">
+              <span class="label">HN</span>
+              <span class="value">{{ selectedPatient.hn }}</span>
+            </div>
+
+            <div class="info-row">
+              <span class="label">ชื่อ - สกุล:</span>
+              <span class="value">{{ selectedPatient.patient_name }}</span>
+            </div>
+
+            <div class="info-row">
+              <span class="label">อายุ:</span>
+              <span class="value">
+                {{ selectedPatient.age_y }} ปี
+                {{ selectedPatient.age_m }} เดือน
+                {{ selectedPatient.age_d }} วัน
+              </span>
+            </div>
+
+            <div class="info-row">
+              <span class="label">วันที่เข้าพักรักษา:</span>
+              <span class="value">
+                {{ selectedPatient.regdate | date:'dd/MM/yyyy' }}
+              </span>
+            </div>
+
+            <div class="info-row">
+              <span class="label">จำนวนวันนอน:</span>
+              <span class="value">
+                {{ selectedPatient.admdate }} วัน
+              </span>
+            </div>
+
+            <div class="info-row">
+              <span class="label">สิทธิ์การรักษา:</span>
+              <span class="value">{{ selectedPatient.pttype_name }}</span>
+            </div>
+
+            <div class="info-row">
+              <span class="label">แพทย์เจ้าของไข้:</span>
+              <span class="value">{{ selectedPatient.admdoctor_name }}</span>
+            </div>
+            <!-- ===== LAB ===== -->
+            <div class="info-row">
+              <span class="label">Lab:</span>
+              <span class="value lab-inline" *ngIf="selectedPatient?.lab_status; else noLab">
+                <img src="assets/images/lab.png" class="status-icon" />
+
+                <img *ngIf="selectedPatient.lab_status === 'W'"
+                    src="assets/images/status-report.png"
+                    class="status-icon lab-overlay" />
+
+                <img *ngIf="selectedPatient.lab_status === 'C'"
+                    src="assets/images/status-wait.png"
+                    class="status-icon lab-overlay" />
+
+                <img *ngIf="selectedPatient.lab_status === 'N'"
+                    src="assets/images/status-none.png"
+                    class="status-icon lab-overlay" />
+
+                <img *ngIf="selectedPatient.lab_status === 'Y'"
+                    src="assets/images/status-ok.png"
+                    class="status-icon lab-overlay" />
+
+                <span class="status-text">
+                  {{ getLabText(selectedPatient.lab_status) }}
+                </span>
+              </span>
+
+              <ng-template #noLab>–</ng-template>
+            </div>
+
+            <!-- ===== XRAY ===== -->
+            <div class="info-row">
+              <span class="label">X-ray:</span>
+              <span class="value lab-inline" *ngIf="selectedPatient?.xray_status; else noXray">
+                <img src="assets/images/xray.png" class="status-icon" />
+
+                <img *ngIf="selectedPatient.xray_status === 'W'"
+                    src="assets/images/status-report.png"
+                    class="status-icon lab-overlay" />
+
+                <img *ngIf="selectedPatient.xray_status === 'C'"
+                    src="assets/images/status-wait.png"
+                    class="status-icon lab-overlay" />
+
+                <img *ngIf="selectedPatient.xray_status === 'N'"
+                    src="assets/images/status-none.png"
+                    class="status-icon lab-overlay" />
+
+                <img *ngIf="selectedPatient.xray_status === 'Y'"
+                    src="assets/images/status-ok.png"
+                    class="status-icon lab-overlay" />
+
+                <span class="status-text">
+                  {{ getXrayText(selectedPatient.xray_status) }}
+                </span>
+              </span>
+
+              <ng-template #noXray>–</ng-template>
+            </div>
+
+          </div>
+
+          
+
+      </div>
+    </div>
+
+
+</div>
+
+<div class="legend-backdrop" *ngIf="showLegend">
+  <div class="legend-popup">
+
+    <!-- HEADER -->
+    <div class="legend-header">
+      <span>📌 คำอธิบายสัญลักษณ์</span>
+      <button class="legend-close"  title="ปิด"(click)="closeLegend()">✕</button>
+    </div>
+
+    <!-- BODY -->
+    <div class="legend-body">
+
+      <div class="legend-section">
+        <div class="legend-item">🧪 <span>มีคำสั่งตรวจ Lab</span></div>
+        <div class="legend-item">🩻 <span>มีคำสั่ง X-ray</span></div>
+      </div>
+
+      <hr />
+
+      <div class="legend-section">
+        <div class="legend-title">Status</div>
+
+        <div class="legend-item">⏳ <span>กำลังดำเนินการ</span></div>
+        <div class="legend-item">⏰ <span>รอผลตรวจ</span></div>
+        <div class="legend-item">📄 <span>รายงานผลแล้ว</span></div>
+        <div class="legend-item">✅ <span>ผลเสร็จสมบูรณ์</span></div>
+      </div>
+
+    </div>
+  </div>
+</div>

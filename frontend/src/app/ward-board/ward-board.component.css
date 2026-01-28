@@ -1,0 +1,849 @@
+/* =========================================================
+   GLOBAL RESET
+========================================================= */
+* {
+  box-sizing: border-box;
+  font-family: Tahoma, Arial, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-size: 16px;
+}
+
+/* =========================================================
+   ROOT LAYOUT
+========================================================= */
+.display-root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 100px;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+.display-header {
+  background: #11286e;
+  color: #ffffff;
+
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+
+.display-title {
+  font-size: 22px;
+  font-weight: 700;
+  white-space: nowrap
+}
+
+.display-summary {
+  
+  display: flex;
+  white-space: nowrap; 
+  justify-content: center;
+  gap: 18px;
+  font-size: 22px;
+}
+
+
+/* =========================================================
+   BOARD WRAPPER
+========================================================= */
+.board-wrapper {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  position: relative;
+  overflow: visible;
+
+background: linear-gradient(
+   160deg,
+  #020617 0%,
+  #0b1a5d 40%,
+  #020617 100%
+);
+
+
+  padding-top: 10px;
+  padding-bottom: 12px;
+}
+
+
+/* =========================================================
+   WARD MAP GRID
+========================================================= */
+.ward-map {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 5px;
+  /* ⭐ เพิ่มความสูงแถว */
+  grid-template-rows:
+    auto        /* แถวที่ 1 */
+    25px      
+    auto;       /* แถวที่ 2 */
+  align-items: start;
+  grid-template-areas:
+    /* ===== แถวที่ 1 ===== */
+    "female female female female center male male male male isolation2 isolation2"
+    /* ===== แถวทางเดิน ===== */
+    ". . . . . . . . . . ."
+ 
+    /* ===== แถวที่ 2 ===== */
+    "special1 special1 extra extra special3 special3 rehab rehab p05 isolation1 isolation1";
+}
+
+/* =========================================================
+   ZONE
+========================================================= */
+.zone {
+  border: 2px solid #555;
+  padding: 10px;
+  background: #f8f8f8;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.zone-title {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* ZONE COLORS */
+.female    { background: #fde7f3; grid-area: female; }
+.center { grid-area: center; }
+.male      { background: #e3f2fd; grid-area: male; }
+.special   { background: #e8f5e9; }
+.rehab     { background: #f3e5f5; grid-area: rehab; }
+.isolation { background: #fff3e0; }
+
+
+.special1  { grid-area: special1; }
+.special3  { grid-area: special3; }
+.zone--extra { grid-area: extra; background: #fff3e0; }
+.isolation1 { grid-area: isolation1; }
+.isolation2 { grid-area: isolation2;align-self: end; }
+.p05 { grid-area: p05; }
+.rehab { grid-area: rehab; }
+
+
+/* CENTER (NURSE) */
+/* CENTER (NURSE) */
+.center {
+  grid-area: center;
+  background: linear-gradient(
+    160deg,
+    #38a7f1 0%,
+    #f0f9ff 60%,
+    #ee72b6 100%
+  );
+
+  border-radius: 18px;
+  justify-content: center;
+  align-items: center;
+  align-self: end;
+}
+
+
+.nurse {
+  padding: 18px;
+  text-align: center;
+
+  /* ⭐ พื้นด้านใน */
+  background: #ffffff;
+
+  /* ⭐ กรอบไล่สี */
+  border: 3px solid transparent;
+  border-radius: 14px;
+
+  background-image:
+    linear-gradient(#ffffff, #ffffff),
+    linear-gradient(
+      135deg,
+      #7dd3fc,   /* ฟ้า */
+      #ffffff,  /* ขาว */
+      #f7b1d8   /* ชมพู */
+    );
+
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+
+  /* ⭐ เงานุ่ม ดูเป็นศูนย์กลาง */
+  box-shadow:
+    0 10px 24px rgba(0,0,0,0.25),
+    0 0 0 4px rgba(255,255,255,0.6);
+}
+
+.nurse-image {
+  width: 90px;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.25));
+}
+
+
+/* =========================================================
+   ROOMS
+========================================================= */
+.rooms {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  grid-auto-rows: min-content;
+}
+
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-1 { grid-template-columns: 1fr; }
+
+/* =========================================================
+   ROOM
+========================================================= */
+.room {
+  border: none;
+  /* background: #fff; */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+  background: transparent;
+  height: auto;   
+}
+
+.room-title {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 4px 0;
+  border-bottom: 1px solid #555;
+}
+
+/* =========================================================
+   BED (ขนาดมาตรฐาน)
+========================================================= */
+.ward-map .bed {
+  width: 100%;max-width: 220px; min-height: 110px;   /* ✅ รองรับ 3 บรรทัด */
+  height: auto;        /* ✅ ให้ขยายตามเนื้อหา */
+
+  border: 1px solid #555;
+  padding: 4px;
+  margin: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+
+.bed:hover {
+  outline: 2px solid #555;
+  opacity: 0.85;
+}
+
+/* BED STATUS */
+.occupied {
+  background: linear-gradient(
+    to bottom,
+    #508385 0%,
+    #4e8499 50%,
+    #1f4d4e 100%
+  );
+  color: #0b1a5d;
+  border-left: 5px solid #15408c;
+}
+
+.occupied.nurse {
+  background: linear-gradient(
+    to bottom,
+    #ef4444 0%,
+    #dc2626 100%
+  );
+  border-left: 6px solid #7f1d1d;
+  color: #fff;
+}
+
+.occupied.medication {
+  background: linear-gradient(
+    to bottom,
+    #fb923c 0%,
+    #f97316 100%
+  );
+  border-left: 6px solid #9a3412;
+  color: #fff;
+}
+.occupied.doctor,
+.occupied.default {
+  background: linear-gradient(
+    to bottom,
+    #fde047 0%,
+    #facc15 100%
+  );
+  border-left: 6px solid #854d0e;
+  color: #3f2d00;
+}
+.bed.empty {
+  background: #ffffff;
+  color: #111827;
+  border-left: 5px solid #cbd5e1;
+}
+
+.bed.empty .bed-head {
+  background: #bacada;
+  color: #374151;
+}
+
+.bed.empty .bed-patient {
+  color: #111827;   /* ⭐ สำคัญ */
+}
+
+/* =========================================================
+   BED PATIENT
+========================================================= */
+.bed-patient {
+  flex: 1;
+  line-height: 1.3;
+  overflow: hidden;
+  color: #f8f8f8;
+}
+
+.bed-name {
+  font-size: 16px;
+  font-weight: 700;
+  
+}
+
+.bed-meta {
+  font-size: 13px;
+  opacity: 0.9;
+}
+/* ===== HEAD BED ===== */
+.bed {
+  display: flex;
+  flex-direction: column; 
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);/* สำคัญ */
+}
+
+.bed-head {
+  width: 100%;
+  height: 28px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #62c8da, #96d8e4);
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.15);
+  color: #425c60;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 8px;
+  margin-bottom: 4px;
+
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 4px 4px 0 0;
+}
+/* 9fb5a9 */
+.bed-code {
+  font-weight: 700;
+}
+
+.bed-head-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;           /* ระยะห่างระหว่างไอคอน */
+}
+
+/* =========================================================
+   WAITING FOOTER
+========================================================= */
+.waiting-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+
+  display: flex;              /* ⭐ ต้องมี */
+  align-items: center;
+  gap: 12px;                  /* ระยะห่างหัวข้อกับการ์ด */
+
+  background: #f0e54e;
+  border-top: 2px solid #47ff5f;
+
+  padding: 6px 12px;
+  z-index: 99999;
+
+  max-height: 90px;
+  overflow: hidden;
+
+  color: #1f1818;
+}
+
+
+.waiting-title {
+  font-weight: 600;
+  font-size: 14px;       /*  */
+  margin: 0 0 4px 0;
+  flex-shrink: 0;
+}
+.waiting-list {
+  display: flex;
+  gap: 8px;
+  flex: 1; 
+  overflow-x: auto;     /* ⭐ เลื่อนซ้าย–ขวา */
+  overflow-y: hidden;
+
+  white-space: nowrap;
+}
+
+
+.waiting-card {
+  min-width: 120px;     /* 🔽 จากเดิม */
+  max-width: 140px;
+  background: #50c5c9;
+  border: 1.5px solid #f57373;
+  padding: 4px 6px;     /* 🔽 */
+  border-radius: 6px;
+
+  font-size: 13px;      /* 🔽 */
+  line-height: 1.2;
+
+  flex-shrink: 0;       /* ไม่ให้บีบ */
+}
+
+.waiting-footer.empty {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+
+  background: #6495ED;
+  border-top: 2px solid #040949;
+
+  
+  padding: 10px 16px;
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+/* ================= POPUP (MODAL) ================= */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 9999;
+}
+
+/* ⭐ กล่องป๊อปอัพ */
+.modal {
+  width: 680px;           /* เพิ่มความกว้าง */
+  max-width: 90vw;        /* กันล้นจอ */
+  max-height: 85vh;       /* กันสูงเกินจอ */
+
+  background: #fafafa;
+  border-radius: 12px;
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+}
+
+
+.modal-header {
+  padding: 16px 20px;
+  background: #6daff0;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  font-size: 18px;
+  font-weight: 700;
+  border-bottom: 1px solid #e5e7eb;
+}
+.lab-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-text {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+
+.modal-body {
+  padding: 20px;
+  font-size: 16px;
+  line-height: 1.6;
+
+  overflow-y: auto;     /* ⭐ เลื่อนข้อมูลได้ */
+  flex: 1;
+}
+
+.info-row,
+.bed-info {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 12px;
+
+  margin-bottom: 12px;
+}
+
+.label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.value {
+  color: #111827;
+}
+.modal-footer {
+  padding: 14px 20px;
+  text-align: right;
+
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.close-btn:hover {
+  color: #ef4444;
+}
+
+/* =========================================================
+   icone 
+========================================================= */
+.head-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+.status-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+.lab-status-text,
+.xray-status-text {
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 2px;
+  white-space: nowrap;
+}
+.bed-head-right .status-icon {
+  margin-left: -2px;
+}
+.lab-stack {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.95;
+}
+
+.lab-base {
+  position: relative;
+  z-index: 1;
+}
+
+.lab-overlay {
+  position: absolute;
+  top: -4px;     /* ปรับตำแหน่งได้ */
+  right: -4px;
+  z-index: 2;
+  width: 12px;   /* เล็กกว่า Lab */
+  height: 12px;
+}
+
+.btn-fullscreen {
+  background: #247dcf;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-fullscreen:hover {
+  opacity: 0.85;
+}
+/* =========================================================
+   icone refash
+========================================================= */
+.footer-right {
+  background: none;      
+  color: #ffffff;
+  border: none;
+
+  padding: 8px 14px;
+  border-radius: 6px;
+
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition: opacity 0.2s ease;
+}
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.footer-right:hover:not(:disabled) {
+  opacity: 0.85;
+}
+.footer-right:disabled {
+  background: #b4dff8;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+/* ===== FLOATING NOTE ===== */
+.floating-note {
+  position: fixed;          /* ลอย ไม่กระทบ layout */
+  top: 120px;
+  right: 24px;
+
+  width: 280px;
+  height: 180px;
+
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+}
+
+/* หัวกล่อง (ใช้ลาก) */
+.note-header {
+  background: linear-gradient(90deg, #11286e, #15408c);
+  color: #ffffff;
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: move;
+  border-radius: 12px 12px 0 0;
+}
+
+/* เนื้อหา */
+.note-body {
+  flex: 1;
+  padding: 8px;
+}
+
+.note-body textarea {
+  width: 100%;
+  height: 100%;
+  border: none;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+}
+
+/* มุมขยาย (ไว้ต่อยอด resize) */
+.resize-handle {
+  width: 14px;
+  height: 14px;
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  background: #cbd5e1;
+  border-radius: 3px;
+  cursor: nwse-resize;
+}
+/* ⭐ NOTE COLLAPSE STAR (สำหรับพับกล่องบันทึก) */
+.note-toggle-star {
+  position: fixed;
+  right: 20px;
+  bottom: 50px;        /* ⬅ อยู่ล่าง */
+
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+
+  border: none;
+  cursor: pointer;
+  font-size: 22px;
+
+  background: linear-gradient(135deg, #cce9ff, #f8d7ff);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+
+  z-index: 10000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.note-toggle-star:hover {
+  transform: scale(1.08);
+}
+
+
+.note-star {
+  position: fixed;
+  right: 20px;
+  bottom: 60px;        /* ⬅ ดันขึ้นบน */
+
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+
+  border: none;
+  cursor: pointer;
+  font-size: 22px;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #cce9ff, #f8d7ff);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+
+  z-index: 10000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.note-star:hover {
+  transform: scale(1.08);
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.star-btn:hover {
+  transform: scale(1.1);
+}
+
+.note-star:hover {
+  transform: scale(1.08);
+  box-shadow: 0 12px 26px rgba(0,0,0,0.35);
+}
+/* BACKDROP */
+.legend-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 10001;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* POPUP */
+.legend-popup {
+  width: 320px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+
+  overflow: hidden;
+  animation: popupFade 0.2s ease;
+}
+
+/* HEADER */
+.legend-header {
+  background: linear-gradient(90deg, #cce9ff, #f8d7ff);
+  padding: 12px 16px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  font-weight: 700;
+}
+
+/* ปุ่ม X */
+.legend-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* BODY */
+.legend-body {
+  padding: 14px 18px;
+  font-size: 15px;
+}
+
+.legend-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legend-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.legend-item span {
+  color: #374151;
+}
+
+/* เส้นคั่น */
+.legend-body hr {
+  margin: 12px 0;
+  border: none;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* ANIMATION */
+@keyframes popupFade {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
