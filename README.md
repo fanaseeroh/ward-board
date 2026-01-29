@@ -1,5 +1,5 @@
 Clone หรือ Download
-git clone https://github.com/fanaseeroh/Medical-Reimbursement-Monitoring-and-Verification-System.git
+git clone https://github.com/fanaseeroh/ward-board
 -------------------------
 ตั้งค่า Backend
 cd backend
